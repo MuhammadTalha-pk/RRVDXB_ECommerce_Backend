@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 =======
 # RRVDXB E-Commerce Backend
 
@@ -144,4 +142,3 @@ AI + Backend Developer
 **RRVDXB - Premium E-Commerce Platform**
 
 Developed for **TechNexus Virtual University**.
->>>>>>> b6f600a (full working backend)
