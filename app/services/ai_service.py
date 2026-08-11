@@ -1,3 +1,4 @@
+
 import random
 import string
 from datetime import datetime
@@ -53,3 +54,30 @@ def validate_and_apply_coupon(db: Session, code: str, order_amount: float):
         raise HTTPException(status_code=400, detail=f"Minimum order amount for this coupon is {coupon.min_order}")
 
     return coupon
+
+from typing import Any
+
+from app.ai.sentiment_analyzer import (
+    sentiment_analyzer,
+)
+
+
+class AIService:
+    def analyze_sentiment(
+        self,
+        review: str,
+    ) -> dict[str, Any]:
+        return sentiment_analyzer.analyze(review)
+
+    def get_status(self) -> dict[str, Any]:
+        return {
+            "success": True,
+            "service": "RRVDXB AI Service",
+            "status": "operational",
+            "modules": {
+                "sentimentAnalyzer": "available",
+            },
+        }
+
+
+ai_service = AIService()
