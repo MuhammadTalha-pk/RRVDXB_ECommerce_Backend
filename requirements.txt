@@ -9,3 +9,5 @@ passlib[bcrypt]
 stripe
 openai
 python-multipart
+vaderSentiment==3.3.2
+slowapi==0.1.9
