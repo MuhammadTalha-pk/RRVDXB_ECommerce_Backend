@@ -1,28 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException
-import stripe
-from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.models.user import User
+from app.services.payment_service import payment_service
 
 router = APIRouter()
 
-stripe.api_key = settings.STRIPE_API_KEY
 
 @router.post("/create-payment-intent")
 def create_payment_intent(
-    amount: int, # amount in cents
-    current_user: User = Depends(get_current_user)
+    amount: int,
+    current_user: User = Depends(get_current_user),
 ):
-    if not settings.STRIPE_API_KEY or settings.STRIPE_API_KEY == "sk_test_placeholder":
-        # Return mock data if Stripe is not configured
-        return {"clientSecret": "mock_client_secret"}
-        
     try:
-        intent = stripe.PaymentIntent.create(
+        result = payment_service.create_payment_intent(
             amount=amount,
             currency="aed",
-            metadata={"user_id": current_user.id}
+            metadata={"user_id": current_user.id},
+            description="RRVDXB checkout payment",
         )
-        return {"clientSecret": "mock_client_secret" if not intent.client_secret else intent.client_secret} # Using mock fallback for safety if something weird happens
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result.get("message", "Payment failed"))
+        return {
+            "clientSecret": result.get("client_secret"),
+            "paymentIntentId": result.get("payment_intent_id"),
+            "status": result.get("status"),
+            "amount": result.get("amount"),
+            "currency": result.get("currency"),
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
