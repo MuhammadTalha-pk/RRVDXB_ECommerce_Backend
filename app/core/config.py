@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     EMAIL_FROM: str = "noreply@rrvdxb.com"
 
+    # --- AI Product Recommender (Ubaid Ullah Farooqui) ---
+    RECOMMENDER_DEFAULT_LIMIT: int = 5
+    RECOMMENDER_MAX_LIMIT: int = 20
+    RECOMMENDER_CACHE_TTL_SECONDS: int = 300
+    TRENDING_WINDOW_DAYS: int = 7
+    PRODUCT_ID_PREFIX: str = "P"
+    PRODUCT_ID_PAD: int = 3
+    USE_SYNTHETIC_FALLBACK: bool = True
+    SYNTHETIC_DATASET_PATH: str = "data/synthetic_dataset.json"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

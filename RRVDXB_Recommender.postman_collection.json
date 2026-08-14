@@ -1,0 +1,174 @@
+{
+  "info": {
+    "name": "RRVDXB — AI Product Recommender",
+    "description": "Endpoints owned by Ubaid Ullah Farooqui (UF). Set the base_url variable to the local dev server or the deployed Render URL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8010" },
+    { "key": "user_id", "value": "26" }
+  ],
+  "item": [
+    {
+      "name": "Recommendations — known shopper",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/ai/recommendations?userId={{user_id}}&limit=5",
+          "host": ["{{base_url}}"],
+          "path": ["api", "ai", "recommendations"],
+          "query": [
+            { "key": "userId", "value": "{{user_id}}" },
+            { "key": "limit", "value": "5" }
+          ]
+        },
+        "description": "Three channels: personalized (collaborative filtering), trending (recency-weighted popularity), boughtTogether (co-occurrence anchored on the last order)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('has the three contract keys', () => {",
+              "  pm.expect(Object.keys(body).sort()).to.eql(['boughtTogether','personalized','trending']);",
+              "});",
+              "pm.test('no channel is empty', () => {",
+              "  ['personalized','trending','boughtTogether'].forEach(c => pm.expect(body[c].length).to.be.above(0));",
+              "});",
+              "pm.test('items are {productId, reason}', () => {",
+              "  body.personalized.forEach(i => {",
+              "    pm.expect(Object.keys(i).sort()).to.eql(['productId','reason']);",
+              "    pm.expect(i.productId).to.match(/^P\\d{3,}$/);",
+              "  });",
+              "});",
+              "pm.test('under the 4s NFR', () => pm.expect(pm.response.responseTime).to.be.below(4000));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recommendations — guest (no userId)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/ai/recommendations?limit=5",
+          "host": ["{{base_url}}"],
+          "path": ["api", "ai", "recommendations"],
+          "query": [{ "key": "limit", "value": "5" }]
+        },
+        "description": "Cold start. Falls back to popularity and content similarity — must still return all three channels."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('fallback fills every channel', () => {",
+              "  ['personalized','trending','boughtTogether'].forEach(c => pm.expect(body[c].length).to.be.above(0));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recommendations — unknown shopper",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/ai/recommendations?userId=999999",
+          "host": ["{{base_url}}"],
+          "path": ["api", "ai", "recommendations"],
+          "query": [{ "key": "userId", "value": "999999" }]
+        },
+        "description": "A userId with no history must fall back cleanly rather than 404 or return empty arrays."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recommendations — limit out of range (expect 422)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/ai/recommendations?userId={{user_id}}&limit=999",
+          "host": ["{{base_url}}"],
+          "path": ["api", "ai", "recommendations"],
+          "query": [
+            { "key": "userId", "value": "{{user_id}}" },
+            { "key": "limit", "value": "999" }
+          ]
+        },
+        "description": "Validation check. limit is capped at 20."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/ai/recommendations/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "ai", "recommendations", "health"]
+        },
+        "description": "Reports which data source is live (postgres / synthetic / empty), how many products and orders loaded, and cache age."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('products are loaded', () => pm.expect(pm.response.json().productsLoaded).to.be.above(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refresh cache",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/ai/recommendations/refresh",
+          "host": ["{{base_url}}"],
+          "path": ["api", "ai", "recommendations", "refresh"]
+        },
+        "description": "Rebuilds the co-occurrence matrix, embeddings and user profiles immediately instead of waiting for the 300s TTL. Useful after an admin bulk-uploads products."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+          }
+        }
+      ]
+    }
+  ]
+}
