@@ -8,8 +8,8 @@ from pydantic_settings import (
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "RRVDXB API"
-    DATABASE_URL: str
-    SECRET_KEY: str
+    DATABASE_URL: str = "sqlite:///./rrvdxb.db"
+    SECRET_KEY: str = "dev-secret-change-me"
 
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30

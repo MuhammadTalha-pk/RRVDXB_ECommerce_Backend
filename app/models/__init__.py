@@ -10,3 +10,4 @@ from app.models.review import Review
 from app.models.chat import ChatHistory
 from app.models.coupon import Coupon
 from app.models.wishlist import Wishlist
+from app.models.flash_sale import FlashSale

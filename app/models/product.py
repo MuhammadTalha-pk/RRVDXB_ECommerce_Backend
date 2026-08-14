@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, DECIMAL, ForeignKey, ARRAY
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, DECIMAL, ForeignKey, JSON
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -13,7 +13,7 @@ class Product(Base):
     old_price = Column(DECIMAL(10, 2))
     category_id = Column(Integer, ForeignKey("categories.id"))
     brand_id = Column(Integer, ForeignKey("brands.id"))
-    images = Column(ARRAY(String))
+    images = Column(JSON, default=list)
     stock = Column(Integer, default=0)
     is_featured = Column(Boolean, default=False)
     is_best_seller = Column(Boolean, default=False)
